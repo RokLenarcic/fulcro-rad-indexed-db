@@ -8,7 +8,8 @@
             [clojure.test :refer [deftest is testing async]]
             [promesa.core :as p]
             [com.wsscode.pathom.connect :as pc]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [com.fulcrologic.fulcro.algorithms.tempid :as tempid]))
 
 (attr/defattr id ::id :int
   {ao/identity? true
@@ -57,6 +58,6 @@
                (async/<! (parser {} [{[::id 1] [::id ::name]}]))))
         (is (= {`form/delete-entity nil}
                (async/<! (parser {} `[(form/delete-entity [::id 1])]))))
-        (is (= {[::id 1] nil}
+        (is (= {[::id 1] {::id 1}}
                (async/<! (parser {} [{[::id 1] [::id ::name]}]))))
         (done)))))

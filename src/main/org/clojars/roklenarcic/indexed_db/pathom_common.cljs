@@ -3,6 +3,7 @@
             [com.fulcrologic.rad.attributes :as attr]
             [com.fulcrologic.guardrails.core :refer [>defn ? =>]]
             [com.fulcrologic.rad.form :as form]
+            [com.fulcrologic.rad.middleware.save-middleware :as r.s.middleware]
             [edn-query-language.core :as eql]
             [org.clojars.roklenarcic.fulcro-rad-indexed-db :as main]
             [org.clojars.roklenarcic.indexed-db.delta :as delta]
@@ -115,3 +116,27 @@
                           (throw (ex-info "form/pathom-plugin is not installed on the parser." {})))
         {::form/keys [id master-pk]} params]
     (p/then result (fn [{:keys [tempids] :as r}] (assoc r master-pk (get tempids id id))))))
+
+(def wrap-save (r.s.middleware/wrap-rewrite-values (reify-middleware save-form!)))
+(def wrap-delete (reify-middleware delete-entity!))
+
+(>defn generate-resolvers
+  "Generates resolvers for ID attributes to their related attributes"
+  [attributes ->id-resolver]
+  [::attr/attributes fn? => some?]
+  (let [key->attribute (attr/attribute-map attributes)
+        entity-id->attributes (group-by ::k (mapcat (fn [attribute]
+                                                      (map
+                                                        (fn [id-key] (assoc attribute ::k id-key))
+                                                        (get attribute ::attr/identities)))
+                                                    attributes))]
+    (reduce-kv
+      (fn [result k v]
+        (enc/if-let [attr (key->attribute k)
+                     resolver (->id-resolver attr v)]
+          (conj result resolver)
+          (do
+            (log/error "Internal error generating resolver for ID key" k)
+            result)))
+      []
+      entity-id->attributes)))

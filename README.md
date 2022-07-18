@@ -1,14 +1,18 @@
 # Fulcro RAD IndexedDB Storage
 
+[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.roklenarcic/fulcro-rad-indexed-db.svg)](https://clojars.org/org.clojars.roklenarcic/fulcro-rad-indexed-db)
+
 This is a CLJS library to use Browser's IndexedDB API to use as a RAD storage provider.
 
 The current state is that library provides:
 - Basic operations on Indexed DB
 - One or many schemas
-- Save and Delete Middleware for Pathom 2
-- ID resolvers for Pathom Connect 2
+- Save and Delete Middleware for Pathom 2 and 3
+- ID resolvers for Pathom Connect 2 and resolvers for Pathom 3
 - Pathom 2 parser function
+- Pathom 3 processor
 - A Fulcro Remote using the Pathom 2 parser
+- A Fulcro Remote using the Pathom 3 processor
 
 ## Usage
 
@@ -21,6 +25,7 @@ of your own.
 
 - `[org.clojars.roklenarcic.fulcro-rad-indexed-db :as indexed-db]`: most utility functions you'll need to interact with IndexedDB
 - `[org.clojars.roklenarcic.indexed-db.pathom :as idb-pathom]`: contains Pathom 2 primitives
+- `[org.clojars.roklenarcic.indexed-db.pathom :as idb-pathom3]`: contains Pathom 3 primitives
 
 The basis of operation is that data you're using should be attributes in one or more schemas.
 
@@ -30,7 +35,22 @@ resolvers:
 - RAD form resolvers 
 - resolvers for attributes with ::attr/resolve 
 
-### Using remote
+### Using remote Pathom 3
+
+```clojure
+(defn remote []
+  (idb-pathom3/remote
+    all-attributes ; put all attributes here
+    [(indexed-db/schema-conf :my-schema)] ; coll of schema configurations
+    ; list additional resolvers, you want to use indexed DB with
+    {:extra-resolvers (flatten [m.invoice/resolvers])
+     :log-requests? true
+     :log-responses? true}))
+
+(defonce app (reset! SPA (rad-app/fulcro-rad-app {:remotes {:remote (remote)}})))
+```
+
+### Using remote Pathom 2
 
 ```clojure
 (defn remote []
@@ -57,8 +77,8 @@ entities through mutations other than form mutations will require that you write
 
 ### Working with the interface
 
-The is a map of connections, one for each schema configured, that you'll have in the parser env. You will need
-to grab one of these, create a Transaction, then use some operations in `indexed-db` namespace.
+The `:org.clojars.roklenarcic.fulcro-rad-indexed-db/connections` key in env is a map of connections, 
+one for each schema configured. You will need to grab one of these, create a Transaction, then use some operations in `indexed-db` namespace.
 
 **All operations return Promesa promise. You should return a promise from your mutations and resolvers.**
 

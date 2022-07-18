@@ -3,7 +3,6 @@
             [com.fulcrologic.rad.authorization :as auth]
             [com.fulcrologic.rad.attributes :as attr]
             [com.fulcrologic.rad.form :as form]
-            [com.fulcrologic.rad.middleware.save-middleware :as r.s.middleware]
             [com.fulcrologic.rad.resolvers :as res]
             [com.fulcrologic.guardrails.core :refer [>defn ? =>]]
             [com.wsscode.pathom.core :as p]
@@ -11,14 +10,9 @@
             [edn-query-language.core :as eql]
             [org.clojars.roklenarcic.fulcro-rad-indexed-db :as main]
             [org.clojars.roklenarcic.indexed-db.pathom-common :as common]
-            [taoensso.encore :as enc]
             [taoensso.timbre :as log]
             [promesa.core :as promesa]
             [cljs.spec.alpha :as s]))
-
-(def wrap-save (partial common/reify-middleware common/save-form!))
-
-(def wrap-delete (partial common/reify-middleware common/delete-entity!))
 
 (def form-resolvers
   [{::pc/sym    `form/delete-entity
@@ -59,23 +53,7 @@
   "Generates resolvers for ID attributes to their related attributes"
   [attributes]
   [::attr/attributes => some?]
-  (let [key->attribute (attr/attribute-map attributes)
-        entity-id->attributes (group-by ::k (mapcat (fn [attribute]
-                                                      (map
-                                                        (fn [id-key] (assoc attribute ::k id-key))
-                                                        (get attribute ::attr/identities)))
-                                                    attributes))
-        entity-resolvers      (reduce-kv
-                                (fn [result k v]
-                                  (enc/if-let [attr (key->attribute k)
-                                               resolver (->id-resolver attr v)]
-                                              (conj result resolver)
-                                              (do
-                                                (log/error "Internal error generating resolver for ID key" k)
-                                                result)))
-                                []
-                                entity-id->attributes)]
-    entity-resolvers))
+  (common/generate-resolvers attributes ->id-resolver))
 
 (>defn pathom-plugin
   "A pathom plugin that takes a coll of schema confs and adds the necessary connections for schemas to env.
@@ -133,8 +111,7 @@
   (let [msg  err
         data (or (ex-data err) {})]
     (log/error err "Parser Error:" msg data)
-    {::errors {:message msg
-               :data    data}}))
+    {:com.wsscode.pathom.core/errors {:message msg :data data}}))
 
 (>defn parser [all-attributes extra-resolvers schema-confs]
   [::attr/attributes (s/coll-of map?) ::main/schema-confs => some?]
@@ -146,7 +123,7 @@
               ::pc/mutation-join-globals [:tempids]}
      ::p/plugins [(pc/connect-plugin)
                   ;; Install form middleware
-                  (form/pathom-plugin (r.s.middleware/wrap-rewrite-values (wrap-save)) (wrap-delete))
+                  (form/pathom-plugin common/wrap-save common/wrap-delete)
                   (pathom-plugin all-attributes schema-confs extra-resolvers)
                   (attr/pathom-plugin all-attributes)       ; Other plugins need the list of attributes. This adds it to env.
                   (p/env-plugin {::p/process-error process-error})

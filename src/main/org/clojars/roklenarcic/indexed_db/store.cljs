@@ -56,7 +56,7 @@
             (fn [x]
               (when-let [m (js->clj x :keywordize-keys true)]
                 (let [obj (deser (:obj m))]
-                  (if (satisfies? obj IWithMeta)
+                  (if (satisfies? IWithMeta obj)
                     (with-meta obj (deser (:meta m)))
                     obj))))))
   (put-entity [this ident entity]

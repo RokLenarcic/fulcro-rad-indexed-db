@@ -1,7 +1,8 @@
 (ns com.example.client
   (:require [cljs.core.async :as async]
             [com.fulcrologic.rad.form :as form]
-            [org.clojars.roklenarcic.indexed-db.store :as s]
+            [com.example.client3]
+            [org.clojars.roklenarcic.indexed-db.pathom-common :as common]
             [org.clojars.roklenarcic.indexed-db.pathom :as impl]
             [org.clojars.roklenarcic.fulcro-rad-indexed-db :as core]
             [com.example.client.attributes :as a]
@@ -13,9 +14,7 @@
   {::pc/output [{::all-objects [::a/id]}]}
   {::all-objects [{::a/id 1} {::a/id 2}]})
 
-(defn resolvers []
-  (cons some-res
-        (impl/generate-resolvers [a/id a/email] :db)))
+(defn resolvers [] [some-res])
 
 (defn parser [resolvers]
   (p/async-parser
@@ -24,9 +23,9 @@
                           pc/open-ident-reader p/env-placeholder-reader]
               ::p/placeholder-prefixes #{">"}
               ::pc/mutation-join-globals [:tempids]}
-     ::p/plugins [(pc/connect-plugin {::pc/register resolvers})
-                  (form/pathom-plugin (impl/wrap-save) (impl/wrap-delete))
-                  (impl/pathom-plugin [(core/schema-conf :db)])]}))
+     ::p/plugins [(pc/connect-plugin {})
+                  (form/pathom-plugin common/wrap-save common/wrap-delete)
+                  (impl/pathom-plugin [a/id a/email] [(core/schema-conf :db)] resolvers)]}))
 
 (defn run-q [env q] (async/go (println (async/<! ((parser (resolvers)) env q)))))
 
