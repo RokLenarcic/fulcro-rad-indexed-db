@@ -6,11 +6,11 @@
   <version>0.1.0-SNAPSHOT</version>
   <name>Fulcro RAD IndexedDB database adapter</name>
   <description>Fulcro RAD datastore implemented in ClojureScript using IndexedDB</description>
-  <url>https://github.com/org.clojars.roklenarcic/fulcro-rad-indexed-db</url>
+  <url>https://github.com/RokLenarcic/fulcro-rad-indexed-db</url>
   <licenses>
     <license>
-      <name>Eclipse Public License</name>
-      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+      <name>MIT License</name>
+      <url>https://github.com/RokLenarcic/fulcro-rad-indexed-db/blob/master/LICENSE</url>
     </license>
   </licenses>
   <developers>
@@ -19,9 +19,9 @@
     </developer>
   </developers>
   <scm>
-    <url>https://github.com/org.clojars.roklenarcic/fulcro-rad-indexed-db</url>
-    <connection>scm:git:git://github.com/org.clojars.roklenarcic/fulcro-rad-indexed-db.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/org.clojars.roklenarcic/fulcro-rad-indexed-db.git</developerConnection>
+    <url>https://github.com/RokLenarcic/fulcro-rad-indexed-db</url>
+    <connection>scm:git:git://github.com/RokLenarcic/fulcro-rad-indexed-db.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:RokLenarcic/fulcro-rad-indexed-db.git</developerConnection>
     <tag>v0.1.0-SNAPSHOT</tag>
   </scm>
   <dependencies>
